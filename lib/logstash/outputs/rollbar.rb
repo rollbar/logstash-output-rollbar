@@ -12,7 +12,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
   milestone 1
 
   # Your Rollbar access token
-  config :access_token, :validate => :string, :required => true
+  config :access_token, :validate => :password, :required => true
 
   # The Rollbar environment
   config :environment, :validate => :string, :default => 'production'
@@ -50,7 +50,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     return unless output?(event)
 
     rb_item = hash_recursive
-    rb_item['access_token'] = @access_token
+    rb_item['access_token'] = @access_token.value
 
     data = event.to_hash
     
