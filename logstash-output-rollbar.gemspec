@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-output-rollbar'
-  s.version         = '0.1.0'
+  s.version         = '0.1.1'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "The Rollbar Logstash output sends events to the Rollbar error monitoring service."
-  s.description     = "This gem is a logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program"
+  s.description     = "This gem is a logstash plugin. Install using: $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program"
   s.authors         = ["Rollbar"]
   s.email           = 'support@rollbar.com'
   s.homepage        = "https://github.com/rollbar/logstash-output-rollbar"
