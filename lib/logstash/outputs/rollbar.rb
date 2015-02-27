@@ -41,7 +41,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     @client = Net::HTTP.new(@rb_uri.host, @rb_uri.port)
     if @rb_uri.scheme == "https"
       @client.use_ssl = true
-      @client.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      @client.verify_mode = OpenSSL::SSL::VERIFY_PEER
     end
   end # def register
 
