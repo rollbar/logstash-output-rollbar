@@ -52,7 +52,8 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     rb_item = hash_recursive
     rb_item['access_token'] = @access_token.value
 
-    data = event.to_hash
+    # We'll want to remove fields from data without removing them from the original event
+    data = JSON.parse(event.to_json)
     
     #
     # If logstash has created 'rollbar' fields, we'll use those to populate the item...
