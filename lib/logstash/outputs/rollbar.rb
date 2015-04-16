@@ -67,7 +67,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     end
 
     # ...then put whatever's left in 'custom'...
-    rb_item['data']['body']['custom'] = data
+    rb_item['data']['custom'] = data
 
     # ...and finally override the top level fields that have a specific meaning
     rb_item['data']['timestamp'] = event.timestamp.to_i
