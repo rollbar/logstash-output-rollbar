@@ -9,7 +9,6 @@ require "json"
 # applications, you can use the same token.
 class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
   config_name "rollbar"
-  milestone 1
 
   # Your Rollbar access token
   config :access_token, :validate => :password, :required => true
