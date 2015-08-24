@@ -16,8 +16,8 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
   # The Rollbar environment
   config :environment, :validate => :string, :default => 'production'
 
-  # The Rollbar event level (info, warning, error)
-  config :level, :validate => ['debug', 'info', 'warning', 'error', 'critical'] , :default => 'info'
+  # The default level for Rollbar events (info, warning, error)
+  config :default_level, :validate => ['debug', 'info', 'warning', 'error', 'critical'] , :default => 'info'
 
   # Format for the Rollbar "message" or item title. In most cases you'll want to override this
   # and build up a message with specific fields from the event.
@@ -58,7 +58,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     # If logstash has created 'rollbar' fields, we'll use those to populate the item...
     #
     if data['rollbar']
-      merge_keys = %w{platform language framework context request person server client fingerprint title uuid}
+      merge_keys = %w{platform language framework context request person server client fingerprint title uuid level}
       merge_keys.each do |key|
         data['rollbar'][key] && rb_item['data'][key] = data['rollbar'][key]
       end
@@ -70,7 +70,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
 
     # ...and finally override the top level fields that have a specific meaning
     rb_item['data']['timestamp'] = event.timestamp.to_i
-    rb_item['data']['level'] = @level
+    rb_item['data']['level'] ||= @default_level
     rb_item['data']['environment'] = @environment
     rb_item['data']['body']['message']['body'] = event.sprintf(@format)
 
