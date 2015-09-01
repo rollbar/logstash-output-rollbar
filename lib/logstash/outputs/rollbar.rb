@@ -76,6 +76,7 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
 
     rb_item['data']['notifier']['name'] = 'logstash'
     rb_item['data']['notifier']['version'] = '0.1.0'
+    rb_item['data']['notifier']['version'] = Gem.loaded_specs["logstash-output-rollbar"].version
 
     @logger.debug("Rollbar Item", :rb_item => rb_item)
 
