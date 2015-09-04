@@ -9,19 +9,25 @@ require "json"
 # applications, you can use the same token.
 class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
   config_name "rollbar"
-  milestone 1
 
-  # Your Rollbar access token
+  # Each of these config values can be specified in the plugin configuration section, in which
+  # case they'll apply to all events, or you can override them on an event by event basis.
+  #
+  # Your default Rollbar access token. You can override this for a specific event by adding
+  # a "[rollbar][access_token]" field to that event
   config :access_token, :validate => :password, :required => true
 
-  # The Rollbar environment
+  # The default Rollbar environment. You can override this for a specific event by adding
+  # a "[rollbar][environment]" field to that event
   config :environment, :validate => :string, :default => 'production'
 
-  # The Rollbar event level (info, warning, error)
+  # The default level for Rollbar events (info, warning, error) You can override this for a specific
+  # event by adding a "[rollbar][level]" field to that event
   config :level, :validate => ['debug', 'info', 'warning', 'error', 'critical'] , :default => 'info'
 
-  # Format for the Rollbar "message" or item title. In most cases you'll want to override this
-  # and build up a message with specific fields from the event.
+  # The default format for the Rollbar "message" or item title. In most cases you'll want to override
+  # this and build up a message with specific fields from the event. You can override this for a specific
+  # event by adding a "[rollbar][format]" field to that event.
   config :format, :validate => :string, :default => "%{message}"
 
   # Rollbar API URL endpoint. You shouldn't need to change this.
@@ -50,7 +56,6 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     return unless output?(event)
 
     rb_item = hash_recursive
-    rb_item['access_token'] = @access_token.value
 
     # We'll want to remove fields from data without removing them from the original event
     data = JSON.parse(event.to_json)
@@ -59,7 +64,9 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     # If logstash has created 'rollbar' fields, we'll use those to populate the item...
     #
     if data['rollbar']
-      merge_keys = %w{platform language framework context request person server client fingerprint title uuid}
+
+      merge_keys = %w{access_token client context environment fingerprint format framework
+                      language level person platform request server title uuid }
       merge_keys.each do |key|
         data['rollbar'][key] && rb_item['data'][key] = data['rollbar'][key]
       end
@@ -69,14 +76,33 @@ class LogStash::Outputs::Rollbar < LogStash::Outputs::Base
     # ...then put whatever's left in 'custom'...
     rb_item['data']['custom'] = data
 
-    # ...and finally override the top level fields that have a specific meaning
+    # ...and finally override the fields that have a specific meaning
     rb_item['data']['timestamp'] = event.timestamp.to_i
-    rb_item['data']['level'] = @level
-    rb_item['data']['environment'] = @environment
-    rb_item['data']['body']['message']['body'] = event.sprintf(@format)
+    rb_item['data']['level'] = @level unless rb_item['data'].has_key?('level')
+    rb_item['data']['environment'] = @environment unless rb_item['data'].has_key?('environment')
 
     rb_item['data']['notifier']['name'] = 'logstash'
-    rb_item['data']['notifier']['version'] = '0.1.0'
+    rb_item['data']['notifier']['version'] = Gem.loaded_specs["logstash-output-rollbar"].version
+
+    # Construct the message body using either:
+    #
+    # - The default format string defined above "%{message}"
+    # - The format string specified in the rollbar plugin config section
+    # - The format string specified in the [rollbar][format] event field
+    #
+    format = rb_item['data'].has_key?('format') ? rb_item['data']['format'] : @format
+    rb_item['data']['body']['message']['body'] = event.sprintf(format)
+
+    # Treat the [rollbar][access_token] field as a special case, since we don't need to
+    # include it more than once in the Rollbar item
+    #
+    if rb_item['data'].has_key?('access_token')
+      rb_item['access_token'] = rb_item['data']['access_token']
+      rb_item['data'].delete('access_token')
+    else
+      rb_item['access_token'] = @access_token.value
+    end
+
 
     @logger.debug("Rollbar Item", :rb_item => rb_item)
 
